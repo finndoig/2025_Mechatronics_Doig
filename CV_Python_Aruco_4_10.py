@@ -50,8 +50,6 @@ while True:
     # Detect markers
     corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=parameters)
 
-    
-
     # If markers are detected
     if ids is not None:
         # Draw detected markers
