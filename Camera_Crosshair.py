@@ -7,8 +7,47 @@ import time
 # This is the Aruco library from OpenCV
 import cv2.aruco as aruco 
 import logging
+
+# establish connection with rPi TCP client
+import socket   # This library will allow you to communicate over the network
+import time     # This library will allow us to access the system clock for pause/sleep/delay actions
+import logging  # This library will offer us a different method to print information on the terminal (better for debugging purposes)
+
+# setting the logging level to INFO
+logging.basicConfig(level=logging.INFO)
+
+# This is the IP address of the machine that the data will be send to
+TCP_IP = "138.38.227.166"
+
+# This is the REMOTE port of the Server that we are sending the data to
+TCP_PORT = 12980
+
+# Create the socket for the UDP communication
+s = socket.socket(socket.AF_INET,        # Family of addresses, in this case IP type 
+                     socket.SOCK_STREAM)    # What protocol to use, in this case TCP (streamed communications)
+logging.info('Socket successfully created')
+
+# Establish the connection with the remote Server using their IP and the port                                       
+s.connect((TCP_IP, TCP_PORT))
+logging.info('Connected')
+
+
+# Send signal to rPi to start motor in forward direction
+data = bytes([3])
+s.send(data) # Send data byte to rPi
+
+
+# start logging time motor has been running for
+_run_timer_start = time.perf_counter()
+logging.info("Run timer started at %.6f", _run_timer_start)
+
+
+atexit.register(_stop_timer_and_delay)
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
 
+
+# Function to check for new character in slit frame
 def CheckForNewCharacter(slit_frame, char_arr1, char_arr2, char_arr3, char_arr4):
     """Check which character has the most pixels in view"""
     character_matches = {}
@@ -50,7 +89,7 @@ dist_coef=Camera['dist_coef']# distortion coefficients from the camera
 
 # load CharacterColours array
 from CharacterColours import get_characters
-from tcp_send_fire_laser import send_fire_signal
+
 
 chars = get_characters()
 print(chars)   # -> ['Character1', 'Character2', 'Character3', 'Character4']
@@ -78,14 +117,26 @@ cv2.moveWindow("frame-image",0,100)
 # Create new variables for character count, lost sight timer and in sight boolean
 Character_Count = 8 # how many characters are yet to be seen
 InSight = 0 # boolean to track if character is currently in sight
-TargetNumber = 4 # which character number is the current target
+
+# allow user to input target character number
+print("Enter target (1-4)")
+while True:
+   try:
+       TargetNumber = int(input().strip())
+       if 1 <= TargetNumber <= 4:
+           break
+       print("Please enter a number between 1 and 4")
+   except (ValueError, EOFError, KeyboardInterrupt):
+       print("Please enter a number between 1 and 4")
+
+
 ExitLimit = 10 # how many loops without sight before character is considered lost
 EntryLimit = 20 # how many loops with sight before character is considered
 LostSightTimer = 0 # timer to track how long since character was last seen
 InSightTimer = 0 # timer to track how long character has been in sight
 JustSeen = 0 # tracks which character was just seen
 
-# Execute this continuously
+# Execute this continuously until all characters have been seen
 while(Character_Count > 0):
     
     mask = None  # Initialize mask for each loop
@@ -204,7 +255,9 @@ while(Character_Count > 0):
                         cv2.imshow('frame-image', display)
 
                         # Send signal to rPi to fire laser
-                        send_fire_signal(True)
+                        data = bytes([4])
+                        s.send(data) # Send data byte to rPi
+
                 else:
                     logging.info("Non-target Character %d sighted.", InSight)  
                     if np.any(mask):
@@ -232,7 +285,10 @@ while(Character_Count > 0):
             Character_Count = Character_Count - 1 # decrease character count but not below 0
             logging.info("Character lost! Characters left: %d", Character_Count)
         # Send signal to rPi to fire laser
-        send_fire_signal(False)
+        if InSight == TargetNumber:
+            # Send signal to rPi to stop laser
+            data = bytes([3])
+            s.send(data) # Send data byte to rPi
 
     # Create a display showing characters remaining
     info_display = np.zeros((200, 600, 3), dtype=np.uint8)
@@ -251,6 +307,25 @@ cap.release()
 # close all windows
 cv2.destroyAllWindows()
 # exit the kernel
+
+# Send signal to rPi to reverse motor direction
+data = bytes([2])
+s.send(data) # Send data byte to rPi
+
+# delay for same amount as time as been elapsed at
+_end = time.perf_counter()
+_elapsed = _end - _run_timer_start
+logging.info("Run timer stopped; elapsed %.6f seconds", _elapsed)
+time.sleep(_elapsed)
+
+# Send signal to rPi to stop motor
+data = bytes([1])
+s.send(data) # Send data byte to rPi
+
+# Close the connection
+s.close()
+logging.info('Done')
+
 exit(0)
 
 
