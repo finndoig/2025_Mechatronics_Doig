@@ -13,7 +13,7 @@ def get_characters():
 	Character1 = [0, 20, 70, 30, 80, 150] # finn
 	Character2 = [170, 80, 45, 230, 150, 105] # jake
 	Character3 = [90, 20, 30, 170, 70, 80] # lsp
-	Character4 = [140, 125, 60, 180, 165, 100] # tree trunk
+	Character4 = [55, 125, 95, 110, 170, 130] # tree trunk
 
 	Characters = [Character1, Character2, Character3, Character4]
 	return Characters

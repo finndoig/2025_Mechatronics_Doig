@@ -76,9 +76,13 @@ cv2.moveWindow("frame-image",0,100)
 
 # Create new variables for character count, lost sight timer and in sight boolean
 Character_Count = 8 # how many characters are yet to be seen
-LostSightTimer = 0 # timer to track how long since character was last seen
 InSight = 0 # boolean to track if character is currently in sight
-TargetNumber = 1 # which character number is the current target
+TargetNumber = 4 # which character number is the current target
+ExitLimit = 10 # how many loops without sight before character is considered lost
+EntryLimit = 20 # how many loops with sight before character is considered
+LostSightTimer = 0 # timer to track how long since character was last seen
+InSightTimer = 0 # timer to track how long character has been in sight
+JustSeen = 0 # tracks which character was just seen
 
 # Execute this continuously
 while(Character_Count > 0):
@@ -143,7 +147,13 @@ while(Character_Count > 0):
     if InSight == 0:
         detected_char = CheckForNewCharacter(slit_frame, char_arr1, char_arr2, char_arr3, char_arr4)
         if detected_char is not None:
-            InSight = detected_char
+            if detected_char == JustSeen:
+                InSightTimer += 1  # increase timer for seeing same character
+            else:
+                InSightTimer = 0  # reset timer for different character
+                JustSeen = detected_char
+            if InSightTimer >= EntryLimit:
+                InSight = detected_char
 
     # Handle character currently in sight if there is one
     if InSight > 0:
@@ -217,13 +227,17 @@ while(Character_Count > 0):
     # Handle character sighting and lost sight timer. If character hasnt been seen for over 10 loops, decrease character count
     if InSight > 0 and np.any(mask) == False:
         LostSightTimer += 1
-        if LostSightTimer > 10: # if character has been out of sight for over 10 loops
+        if LostSightTimer > ExitLimit: # if character has been out of sight for over 10 loops
             LostSightTimer = 0
             InSight = 0 # reset InSight to nothing in sight value
             Character_Count = Character_Count - 1 # decrease character count but not below 0
             logging.info("Character lost! Characters left: %d", Character_Count)
 
-
+    # Create a display showing characters remaining
+    info_display = np.zeros((200, 600, 3), dtype=np.uint8)
+    cv2.putText(info_display, f"Characters Left: {Character_Count}", (10, 100), 
+                cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 2)
+    cv2.imshow('Character Count', info_display)
 
     # If the button q is pressed in one of the windows 
     if cv2.waitKey(20) & 0xFF == ord('q'):
