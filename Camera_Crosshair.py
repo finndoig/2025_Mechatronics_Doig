@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.INFO)
 TCP_IP = "138.38.227.166"
 
 # This is the REMOTE port of the Server that we are sending the data to
-TCP_PORT = 12980
+TCP_PORT = 12981
 
 # Create the socket for the UDP communication
 s = socket.socket(socket.AF_INET,        # Family of addresses, in this case IP type 
@@ -31,18 +31,17 @@ logging.info('Socket successfully created')
 s.connect((TCP_IP, TCP_PORT))
 logging.info('Connected')
 
+# allow user to input target character number
+print("Enter target (1-4)")
+while True:
+   try:
+       TargetNumber = int(input().strip())
+       if 1 <= TargetNumber <= 4:
+           break
+       print("Please enter a number between 1 and 4")
+   except (ValueError, EOFError, KeyboardInterrupt):
+       print("Please enter a number between 1 and 4")
 
-# Send signal to rPi to start motor in forward direction
-data = bytes([3])
-s.send(data) # Send data byte to rPi
-
-
-# start logging time motor has been running for
-_run_timer_start = time.perf_counter()
-logging.info("Run timer started at %.6f", _run_timer_start)
-
-
-atexit.register(_stop_timer_and_delay)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
 
@@ -118,23 +117,20 @@ cv2.moveWindow("frame-image",0,100)
 Character_Count = 8 # how many characters are yet to be seen
 InSight = 0 # boolean to track if character is currently in sight
 
-# allow user to input target character number
-print("Enter target (1-4)")
-while True:
-   try:
-       TargetNumber = int(input().strip())
-       if 1 <= TargetNumber <= 4:
-           break
-       print("Please enter a number between 1 and 4")
-   except (ValueError, EOFError, KeyboardInterrupt):
-       print("Please enter a number between 1 and 4")
-
-
 ExitLimit = 10 # how many loops without sight before character is considered lost
 EntryLimit = 20 # how many loops with sight before character is considered
 LostSightTimer = 0 # timer to track how long since character was last seen
 InSightTimer = 0 # timer to track how long character has been in sight
 JustSeen = 0 # tracks which character was just seen
+
+# Send signal to rPi to start motor in forward direction
+data = bytes([3])
+s.send(data) # Send data byte to rPi
+
+
+# start logging time motor has been running for
+_run_timer_start = time.perf_counter()
+logging.info("Run timer started at %.6f", _run_timer_start)
 
 # Execute this continuously until all characters have been seen
 while(Character_Count > 0):
@@ -257,6 +253,7 @@ while(Character_Count > 0):
                         # Send signal to rPi to fire laser
                         data = bytes([4])
                         s.send(data) # Send data byte to rPi
+                        print("Data sent: ", data)
 
                 else:
                     logging.info("Non-target Character %d sighted.", InSight)  
@@ -281,14 +278,16 @@ while(Character_Count > 0):
         LostSightTimer += 1
         if LostSightTimer > ExitLimit: # if character has been out of sight for over 10 loops
             LostSightTimer = 0
-            InSight = 0 # reset InSight to nothing in sight value
             Character_Count = Character_Count - 1 # decrease character count but not below 0
             logging.info("Character lost! Characters left: %d", Character_Count)
-        # Send signal to rPi to fire laser
-        if InSight == TargetNumber:
-            # Send signal to rPi to stop laser
-            data = bytes([3])
-            s.send(data) # Send data byte to rPi
+            # send signal to stop firing laser if it was firing
+            if InSight == TargetNumber:
+                # Send signal to rPi to stop laser
+                data = bytes([3])
+                s.send(data) # Send data byte to rPi
+                print("Data sent: ", data)
+            InSight = 0 # reset InSight to nothing in sight value
+
 
     # Create a display showing characters remaining
     info_display = np.zeros((200, 600, 3), dtype=np.uint8)
@@ -311,6 +310,7 @@ cv2.destroyAllWindows()
 # Send signal to rPi to reverse motor direction
 data = bytes([2])
 s.send(data) # Send data byte to rPi
+print("Data sent: ", data)
 
 # delay for same amount as time as been elapsed at
 _end = time.perf_counter()
@@ -321,6 +321,7 @@ time.sleep(_elapsed)
 # Send signal to rPi to stop motor
 data = bytes([1])
 s.send(data) # Send data byte to rPi
+print("Data sent: ", data)
 
 # Close the connection
 s.close()
