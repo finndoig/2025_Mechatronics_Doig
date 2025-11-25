@@ -50,6 +50,7 @@ dist_coef=Camera['dist_coef']# distortion coefficients from the camera
 
 # load CharacterColours array
 from CharacterColours import get_characters
+from tcp_send_fire_laser import send_fire_signal
 
 chars = get_characters()
 print(chars)   # -> ['Character1', 'Character2', 'Character3', 'Character4']
@@ -202,10 +203,8 @@ while(Character_Count > 0):
                         # Update the display window
                         cv2.imshow('frame-image', display)
 
-                        # (optional) also show the slit with red pixels
-                        #slit_copy = slit_frame.copy()
-                        #slit_copy[mask > 0] = (0, 0, 255)
-                        #cv2.imshow('slit-image', slit_copy)
+                        # Send signal to rPi to fire laser
+                        send_fire_signal(True)
                 else:
                     logging.info("Non-target Character %d sighted.", InSight)  
                     if np.any(mask):
@@ -232,6 +231,8 @@ while(Character_Count > 0):
             InSight = 0 # reset InSight to nothing in sight value
             Character_Count = Character_Count - 1 # decrease character count but not below 0
             logging.info("Character lost! Characters left: %d", Character_Count)
+        # Send signal to rPi to fire laser
+        send_fire_signal(False)
 
     # Create a display showing characters remaining
     info_display = np.zeros((200, 600, 3), dtype=np.uint8)
