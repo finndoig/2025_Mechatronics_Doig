@@ -117,8 +117,8 @@ cv2.moveWindow("frame-image",0,100)
 Character_Count = 8 # how many characters are yet to be seen
 InSight = 0 # boolean to track if character is currently in sight
 
-ExitLimit = 10 # how many loops without sight before character is considered lost
-EntryLimit = 20 # how many loops with sight before character is considered
+ExitLimit = 50 # how many loops without sight before character is considered lost
+EntryLimit = 50 # how many loops with sight before character is considered
 LostSightTimer = 0 # timer to track how long since character was last seen
 InSightTimer = 0 # timer to track how long character has been in sight
 JustSeen = 0 # tracks which character was just seen
@@ -295,11 +295,18 @@ while(Character_Count > 0):
                 cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 2)
     cv2.imshow('Character Count', info_display)
 
+    # Stop the performance counter
+    end = time.perf_counter()
+    
+    # Print to console the execution time in FPS (frames per second)
+    fps = 1.0 / (end - start) if end > start else 0.0
+    logging.info("FPS: %.1f", fps)
+
     # If the button q is pressed in one of the windows 
     if cv2.waitKey(20) & 0xFF == ord('q'):
         # Exit the While loop
         break
-    
+
 
 # When everything done, release the capture
 cap.release()
@@ -320,7 +327,7 @@ time.sleep(_elapsed)
 
 # Send signal to rPi to stop motor
 data = bytes([1])
-s.send(data) # Send data byte to rPi
+s.send(data)   
 print("Data sent: ", data)
 
 # Close the connection

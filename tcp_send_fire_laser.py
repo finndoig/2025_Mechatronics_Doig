@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 
 # default server settings (can be overridden when calling the function)
 DEFAULT_TCP_IP = "138.38.227.166"
-DEFAULT_TCP_PORT = 25000
+DEFAULT_TCP_PORT = 12980
 
 
 def send_fire_signal(value: Union[bool, int]) -> bool:
@@ -38,13 +38,13 @@ def send_fire_signal(value: Union[bool, int]) -> bool:
     
     # internal configuration (change here if needed)
     host = "138.38.227.166" # This is the IP address of the machine that the data will be send to
-    port = 25000 # This is the REMOTE port of the Server that we are sending the data to
+    port = 12981 # This is the REMOTE port of the Server that we are sending the data to
     repeat = 1 # number of times to repeat sending
     delay = 0.0 # delay between repeats in seconds
-    timeout = 2.0 # socket timeout in seconds
+    timeout = 2 # socket timeout in seconds
 
-    data_on = bytes([0, 1])
-    data_off = bytes([0, 0])
+    data_on = bytes([1])
+    data_off = bytes([5])
     payload = data_on if bool(value) else data_off
 
     s = None
