@@ -28,8 +28,8 @@ s = socket.socket(socket.AF_INET,        # Family of addresses, in this case IP 
 logging.info('Socket successfully created')
 
 # Establish the connection with the remote Server using their IP and the port                                       
-s.connect((TCP_IP, TCP_PORT))
-logging.info('Connected')
+#s.connect((TCP_IP, TCP_PORT))
+#logging.info('Connected')
 
 # allow user to input target character number
 print("Enter target (1-4)")
@@ -99,7 +99,7 @@ Character4 = chars[3]
 
 # Select the first camera (0) that is connected to the machine
 # in Laptops should be the build-in camera
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
  
 # Set the width and heigth of the camera to 1920x1080
 cap.set(3,800)
@@ -125,7 +125,7 @@ JustSeen = 0 # tracks which character was just seen
 
 # Send signal to rPi to start motor in forward direction
 data = bytes([3])
-s.send(data) # Send data byte to rPi
+#s.send(data) # Send data byte to rPi
 
 
 # start logging time motor has been running for
@@ -252,7 +252,7 @@ while(Character_Count > 0):
 
                         # Send signal to rPi to fire laser
                         data = bytes([4])
-                        s.send(data) # Send data byte to rPi
+                        #s.send(data) # Send data byte to rPi
                         print("Data sent: ", data)
 
                 else:
@@ -284,7 +284,7 @@ while(Character_Count > 0):
             if InSight == TargetNumber:
                 # Send signal to rPi to stop laser
                 data = bytes([3])
-                s.send(data) # Send data byte to rPi
+                #s.send(data) # Send data byte to rPi
                 print("Data sent: ", data)
             InSight = 0 # reset InSight to nothing in sight value
 
@@ -316,7 +316,7 @@ cv2.destroyAllWindows()
 
 # Send signal to rPi to reverse motor direction
 data = bytes([2])
-s.send(data) # Send data byte to rPi
+#s.send(data) # Send data byte to rPi
 print("Data sent: ", data)
 
 # delay for same amount as time as been elapsed at
@@ -327,7 +327,7 @@ time.sleep(_elapsed)
 
 # Send signal to rPi to stop motor
 data = bytes([1])
-s.send(data)   
+#s.send(data)   
 print("Data sent: ", data)
 
 # Close the connection

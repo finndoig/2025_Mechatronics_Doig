@@ -25,7 +25,7 @@ Character4 = chars[3]
 
 # Select the first camera (0) that is connected to the machine
 # in Laptops should be the build-in camera
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
  
 # Set the width and heigth of the camera to 1920x1080
 cap.set(3,800)
